@@ -6,6 +6,6 @@
   "theme_color": "#050505",
   "start_url": ".",
   "icons": [
-    { "src": "icon-v2.png", "sizes": "180x180", "type": "image/png" }
+    { "src": "terminal-3.png", "sizes": "180x180", "type": "image/png" }
   ]
 }
