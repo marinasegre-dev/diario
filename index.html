@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diário">
+<meta name="theme-color" content="#050505">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png" type="image/png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Diário</title>
+<style>
+  :root {
+    --bg: #050505;
+    --ink: #e8e6df;
+    --muted: #96948b;
+    --line: #232320;
+    --ok: #93c893;
+    --err: #e0917f;
+    --surface: #101010;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 17px;
+    line-height: 1.55;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: calc(env(safe-area-inset-top) + 14px) 20px 10px;
+    border-bottom: 1px solid var(--line);
+    flex: none;
+  }
+  .brand { color: var(--muted); font-size: 15px; }
+  .brand .cursor {
+    display: inline-block;
+    width: 0.55em; height: 1em;
+    background: var(--ok);
+    vertical-align: text-bottom;
+    margin-left: 2px;
+    animation: blink 1.15s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .brand .cursor { animation: none; }
+    * { transition: none !important; }
+  }
+  .hoje { color: var(--muted); font-size: 13px; }
+
+  main { flex: 1; display: flex; min-height: 0; }
+  textarea {
+    flex: 1;
+    width: 100%;
+    padding: 18px 20px;
+    background: transparent;
+    color: var(--ink);
+    border: 0;
+    outline: none;
+    resize: none;
+    font: inherit;
+    caret-color: var(--ok);
+  }
+  textarea::placeholder { color: var(--muted); }
+
+  footer {
+    flex: none;
+    border-top: 1px solid var(--line);
+    padding: 10px 20px calc(env(safe-area-inset-bottom) + 12px);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  #status {
+    flex: 1;
+    font-size: 14px;
+    color: var(--muted);
+    min-height: 1.4em;
+    overflow-wrap: anywhere;
+  }
+  #status.ok  { color: var(--ok); }
+  #status.err { color: var(--err); }
+  button {
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 26px;
+    min-height: 48px;
+    cursor: pointer;
+    transition: background-color .15s ease-out, opacity .15s ease-out;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { background: #161613; }
+  button:disabled { opacity: .45; cursor: default; }
+  #config-link {
+    color: var(--muted);
+    font-size: 13px;
+    text-decoration: none;
+    padding: 10px 4px;
+  }
+
+  /* ── tela de configuração (primeira vez) ── */
+  #setup {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 32px 24px;
+    gap: 16px;
+  }
+  #setup[hidden] { display: none; }
+  #setup h1 { font-size: 17px; font-weight: 600; }
+  #setup p { color: var(--muted); font-size: 15px; max-width: 34ch; }
+  #setup input {
+    font: inherit;
+    font-size: 15px;
+    width: 100%;
+    padding: 13px 14px;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    outline: none;
+  }
+  #setup input:focus { border-color: var(--muted); }
+  #setup .row { display: flex; gap: 12px; align-items: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="brand">~/diário<span class="cursor"></span></span>
+  <span class="hoje" id="hoje"></span>
+</header>
+
+<main>
+  <textarea id="texto" autocomplete="off" autocapitalize="sentences"
+    placeholder="escreve ou dita aqui. isso fica só seu."></textarea>
+</main>
+
+<footer>
+  <div id="status" role="status" aria-live="polite"></div>
+  <a id="config-link" href="#" aria-label="configurar chave">⚙</a>
+  <button id="enviar">enviar</button>
+</footer>
+
+<section id="setup" hidden>
+  <h1>~/diário · primeira vez</h1>
+  <p>para o diário alcançar o seu vault, cola aqui a chave que o Claude te passou. ela fica guardada só neste celular.</p>
+  <input id="token-input" type="password" inputmode="text" autocomplete="off"
+    placeholder="github_pat_…">
+  <div class="row">
+    <button id="salvar-token">guardar chave</button>
+    <div id="setup-status" class="ok" style="font-size:14px"></div>
+  </div>
+</section>
+
+<script>
+  const REPO = 'marinasegre-dev/vault';
+  const PASTA = 'caixa-de-entrada';
+  const LS_TOKEN = 'diario-token';
+  const LS_DRAFT = 'diario-rascunho';
+
+  const $ = id => document.getElementById(id);
+  const texto = $('texto'), status = $('status'), enviar = $('enviar');
+  const setup = $('setup'), tokenInput = $('token-input');
+
+  /* data no topo: "dom, 6 jul" */
+  $('hoje').textContent = new Date().toLocaleDateString('pt-BR',
+    { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '');
+
+  /* chave via link (#token=...) — usada uma vez, some da barra */
+  if (location.hash.startsWith('#token=')) {
+    localStorage.setItem(LS_TOKEN, decodeURIComponent(location.hash.slice(7)));
+    history.replaceState(null, '', location.pathname);
+    mostrarStatus('chave guardada ✓', 'ok');
+  }
+
+  /* rascunho nunca se perde */
+  texto.value = localStorage.getItem(LS_DRAFT) || '';
+  texto.addEventListener('input', () =>
+    localStorage.setItem(LS_DRAFT, texto.value));
+
+  if (!localStorage.getItem(LS_TOKEN)) setup.hidden = false;
+
+  $('config-link').addEventListener('click', e => {
+    e.preventDefault();
+    tokenInput.value = '';
+    $('setup-status').textContent = '';
+    setup.hidden = false;
+    tokenInput.focus();
+  });
+
+  $('salvar-token').addEventListener('click', () => {
+    const t = tokenInput.value.trim();
+    if (!t) { tokenInput.focus(); return; }
+    localStorage.setItem(LS_TOKEN, t);
+    $('setup-status').textContent = 'guardada ✓';
+    setTimeout(() => { setup.hidden = true; texto.focus(); }, 600);
+  });
+
+  function mostrarStatus(msg, tipo) {
+    status.textContent = msg;
+    status.className = tipo || '';
+  }
+
+  function nomeDoArquivo(agora) {
+    const p = n => String(n).padStart(2, '0');
+    return `${agora.getFullYear()}-${p(agora.getMonth() + 1)}-${p(agora.getDate())}` +
+           `-${p(agora.getHours())}${p(agora.getMinutes())}${p(agora.getSeconds())}.md`;
+  }
+
+  function paraBase64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    bytes.forEach(b => bin += String.fromCharCode(b));
+    return btoa(bin);
+  }
+
+  async function enviarNota() {
+    const corpo = texto.value.trim();
+    if (!corpo) { texto.focus(); return; }
+    const token = localStorage.getItem(LS_TOKEN);
+    if (!token) { setup.hidden = false; return; }
+
+    enviar.disabled = true;
+    mostrarStatus('enviando…');
+
+    const agora = new Date();
+    const p = n => String(n).padStart(2, '0');
+    const carimbo = `${agora.getFullYear()}-${p(agora.getMonth() + 1)}-${p(agora.getDate())} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
+    const conteudo = `---\ndata: ${carimbo}\norigem: iphone\n---\n\n${corpo}\n`;
+
+    try {
+      const r = await fetch(
+        `https://api.github.com/repos/${REPO}/contents/${PASTA}/${nomeDoArquivo(agora)}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: `diário: ${carimbo}`,
+            content: paraBase64(conteudo)
+          })
+        });
+
+      if (r.status === 201 || r.status === 200) {
+        texto.value = '';
+        localStorage.removeItem(LS_DRAFT);
+        mostrarStatus('salvo ✓', 'ok');
+        setTimeout(() => { if (status.textContent === 'salvo ✓') mostrarStatus(''); }, 2500);
+      } else if (r.status === 401 || r.status === 403) {
+        mostrarStatus('chave inválida: toca em ⚙ para colar de novo', 'err');
+      } else if (r.status === 404) {
+        mostrarStatus('vault não encontrado: confere a chave em ⚙', 'err');
+      } else {
+        mostrarStatus(`erro ${r.status}. seu texto está guardado, tenta de novo`, 'err');
+      }
+    } catch {
+      mostrarStatus('sem internet. seu texto está guardado, tenta de novo', 'err');
+    } finally {
+      enviar.disabled = false;
+    }
+  }
+
+  enviar.addEventListener('click', enviarNota);
+</script>
+</body>
+</html>
