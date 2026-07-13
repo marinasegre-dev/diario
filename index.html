@@ -570,7 +570,6 @@
     try {
       const arquivos = [...await listarPasta(DIARIO), ...await listarPasta(INBOX)];
       const novoCache = {};
-      let baixados = 0;
       await Promise.all(arquivos.map(async f => {
         if (cache[f.path] && cache[f.path].sha === f.sha) {
           novoCache[f.path] = cache[f.path];
@@ -579,7 +578,6 @@
             const r = await apiGet(f.path, 'application/vnd.github.raw');
             const txt = r.ok ? await r.text() : '';
             novoCache[f.path] = { sha: f.sha, content: txt, dir: f.dir };
-            baixados++;
           } catch { if (cache[f.path]) novoCache[f.path] = cache[f.path]; }
         }
       }));
@@ -640,11 +638,17 @@
     return { fm, corpo };
   }
 
-  /* markdown mínimo e seguro (escapa HTML antes) */
+  /* markdown mínimo e seguro: escapa HTML sempre; atributos com aspas escapadas */
   function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function escAttr(s) { return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }   // texto já vem de esc(); aqui só fecho as aspas p/ contexto de atributo
+  function ehAnexoAudio(nome) { return /\.(m4a|webm|ogg|mp3|wav|aac)$/i.test(nome); }
+  function botaoAnexo(nome) {   // nome já vem escapado por esc() (via inline)
+    const rotulo = ehAnexoAudio(nome) ? '[áudio]' : '[foto]';
+    return `<button class="att" data-att="${escAttr(nome)}">${rotulo} ${nome}</button>`;
+  }
   function inline(s) {
     return esc(s)
-      .replace(/!\[\[([^\]]+)\]\]/g, (_, a) => ` ATT:${a.trim()} `)
+      .replace(/!\[\[([^\]]+)\]\]/g, (_, a) => botaoAnexo(a.trim()))
       .replace(/\[\[([^\]]+)\]\]/g, (_, a) => `<span class="wl">${a.trim()}</span>`)
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
@@ -665,11 +669,7 @@
       par.push(inline(ln));
     }
     fechaPar(); fechaQuote();
-    // troca os marcadores de anexo por botões
-    return out.join('\n').replace(/ ATT:([^ ]+) /g, (_, a) => {
-      const nome = a.trim(); const ehAudio = /\.(m4a|webm|ogg|mp3|wav|aac)$/i.test(nome);
-      return `<button class="att" data-att="${esc(nome)}">${ehAudio ? '[áudio]' : '[foto]'} ${esc(nome)}</button>`;
-    });
+    return out.join('\n');
   }
 
   /* carrega anexo (privado) sob demanda ao tocar */
@@ -686,9 +686,8 @@
             if (!r.ok) continue;
             const blob = await r.blob();
             const url = URL.createObjectURL(blob);
-            const ehAudio = /\.(m4a|webm|ogg|mp3|wav|aac)$/i.test(nome);
             btn.textContent = ''; btn.dataset.loaded = '1';
-            if (ehAudio) {
+            if (ehAnexoAudio(nome)) {
               const au = document.createElement('audio'); au.controls = true; au.src = url; btn.appendChild(au);
             } else {
               const im = document.createElement('img'); im.src = url; im.alt = nome; btn.appendChild(im);
