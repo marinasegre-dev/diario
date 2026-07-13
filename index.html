@@ -39,134 +39,196 @@
 
   header {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding: calc(env(safe-area-inset-top) + 14px) 20px 10px;
+    padding: calc(env(safe-area-inset-top) + 14px) 18px 10px;
     border-bottom: 1px solid var(--line);
     flex: none;
+    gap: 10px;
   }
-  .brand { color: var(--muted); font-size: 15px; }
-  .brand .cursor {
-    display: inline-block;
-    width: 0.55em; height: 1em;
-    background: var(--ok);
-    vertical-align: text-bottom;
-    margin-left: 2px;
+  .tabs { display: flex; align-items: baseline; gap: 16px; }
+  .tab {
+    font: inherit; font-size: 15px; color: var(--muted);
+    background: transparent; border: 0; padding: 4px 0; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tab.active { color: var(--ink); }
+  .tab .cursor {
+    display: none;
+    width: 0.55em; height: 1em; background: var(--ok);
+    vertical-align: text-bottom; margin-left: 3px;
     animation: blink 1.15s steps(1) infinite;
   }
+  .tab.active .cursor { display: inline-block; }
   @keyframes blink { 50% { opacity: 0; } }
+
+  .headright { display: flex; align-items: baseline; gap: 12px; flex: none; }
+  .hoje { color: var(--muted); font-size: 13px; }
+  .cfg-top {
+    font: inherit; font-size: 12px; color: var(--muted);
+    background: transparent; border: 0; opacity: .6; padding: 4px 2px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cfg-top:active { opacity: 1; color: var(--ink); }
+
   @media (prefers-reduced-motion: reduce) {
-    .brand .cursor { animation: none; }
+    .tab .cursor { animation: none; }
     * { transition: none !important; }
   }
-  .hoje { color: var(--muted); font-size: 13px; }
+
+  /* ── vista: escrever ── */
+  #escrever { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  #escrever[hidden] { display: none; }
 
   main { flex: 1; display: flex; min-height: 0; }
   textarea {
-    flex: 1;
-    width: 100%;
-    padding: 18px 20px;
-    background: transparent;
-    color: var(--ink);
-    border: 0;
-    outline: none;
-    resize: none;
-    font: inherit;
-    caret-color: var(--ok);
+    flex: 1; width: 100%; padding: 18px 20px;
+    background: transparent; color: var(--ink);
+    border: 0; outline: none; resize: none; font: inherit; caret-color: var(--ok);
   }
   textarea::placeholder { color: var(--muted); }
 
+  /* bandeja de anexos */
+  #bandeja { border-top: 1px solid var(--line); padding: 12px 20px; display: none; flex-direction: column; gap: 12px; }
+  #bandeja.show { display: flex; }
+  .audio-chip { display: none; align-items: center; gap: 14px; font-size: 15px; }
+  .audio-chip.show { display: flex; }
+  .audio-chip .dot { color: var(--err); }
+  .audio-chip.rec .dot { animation: blink .9s steps(1) infinite; }
+  .audio-chip.done .dot { color: var(--ok); animation: none; }
+  .audio-chip .lbl { color: var(--muted); }
+  .audio-chip .t { color: var(--ink); min-width: 44px; }
+  .audio-chip .act { color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }
+  .fotos { display: flex; gap: 8px; flex-wrap: wrap; }
+  .thumb { width: 56px; height: 56px; border-radius: 6px; position: relative; overflow: hidden; flex: none; border: 1px solid var(--line); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb .x { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 4px; background: rgba(0,0,0,.65); color: var(--ink); font-size: 13px; line-height: 20px; text-align: center; cursor: pointer; }
+
   footer {
-    flex: none;
-    border-top: 1px solid var(--line);
-    padding: 10px 20px calc(env(safe-area-inset-bottom) + 12px);
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    flex: none; border-top: 1px solid var(--line);
+    padding: 10px 16px calc(env(safe-area-inset-bottom) + 12px);
+    display: flex; align-items: center; gap: 8px;
   }
-  #status {
-    flex: 1;
-    font-size: 14px;
-    color: var(--muted);
-    min-height: 1.4em;
-    overflow-wrap: anywhere;
-  }
-  #status.ok  { color: var(--ok); }
+  #status { flex: 1; font-size: 14px; color: var(--muted); min-height: 1.4em; overflow-wrap: anywhere; }
+  #status.ok { color: var(--ok); }
   #status.err { color: var(--err); }
-  button {
-    font: inherit;
-    font-size: 16px;
-    color: var(--ink);
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 12px 26px;
-    min-height: 48px;
-    cursor: pointer;
-    transition: background-color .15s ease-out, opacity .15s ease-out;
+  .boxbtn {
+    font: inherit; font-size: 15px; color: var(--ink);
+    background: transparent; border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; min-height: 46px; cursor: pointer;
+    transition: background-color .15s ease-out; -webkit-tap-highlight-color: transparent;
+  }
+  .boxbtn:active { background: #161613; }
+  .boxbtn:disabled { opacity: .45; }
+  .boxbtn.rec { border-color: var(--err); color: var(--err); }
+  #btnMic { color: var(--err); font-size: 17px; line-height: 1; padding: 12px 16px; }
+  #btnMic.off { color: var(--muted); opacity: .4; }
+  #enviar { font-size: 16px; border-color: var(--muted); padding: 12px 18px; }
+
+  /* ── vista: histórico ── */
+  #historico { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: none; padding: 6px 20px calc(env(safe-area-inset-bottom) + 28px); }
+  #historico.show { display: block; }
+  #hist-info { color: var(--muted); font-size: 13px; padding: 14px 0; }
+  #hist-info.err { color: var(--err); }
+  .entry { padding: 4px 0 6px; }
+  .entry-sep {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); font-size: 12.5px; margin: 22px 0 12px;
+  }
+  .entry-sep::before, .entry-sep::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+  .entry-sep .when { flex: none; white-space: nowrap; }
+  .entry .about { color: var(--muted); font-size: 13px; font-style: italic; margin-bottom: 8px; }
+  .md h1 { font-size: 18px; font-weight: 600; margin: 4px 0 8px; }
+  .md h2 { font-size: 16px; font-weight: 600; color: var(--ink); margin: 16px 0 6px; }
+  .md h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin: 12px 0 4px; }
+  .md p { margin: 0 0 10px; overflow-wrap: anywhere; }
+  .md blockquote { border-left: 2px solid var(--line); padding-left: 12px; margin: 0 0 10px; color: var(--muted); }
+  .md code { background: var(--surface); padding: 1px 5px; border-radius: 4px; font-size: .92em; }
+  .md .wl { color: var(--ok); opacity: .85; }
+  .md hr { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+  .att {
+    font: inherit; font-size: 14px; color: var(--muted);
+    background: transparent; border: 1px dashed var(--line); border-radius: 8px;
+    padding: 8px 12px; margin: 2px 0 10px; cursor: pointer; display: inline-block;
     -webkit-tap-highlight-color: transparent;
   }
-  button:active { background: #161613; }
-  button:disabled { opacity: .45; cursor: default; }
-  #config-link {
-    color: var(--muted);
-    font-size: 13px;
-    text-decoration: none;
-    padding: 10px 4px;
-  }
+  .att:active { color: var(--ink); }
+  .att img { display: block; max-width: 100%; border-radius: 6px; margin-top: 0; }
+  .att audio { display: block; margin-top: 6px; width: 260px; max-width: 72vw; }
 
-  /* ── tela de configuração (primeira vez) ── */
+  /* ── tela de configuração (chave) ── */
   #setup {
-    position: fixed;
-    inset: 0;
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 32px 24px;
-    gap: 16px;
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 32px 24px; gap: 16px; z-index: 20;
   }
   #setup[hidden] { display: none; }
   #setup h1 { font-size: 17px; font-weight: 600; }
   #setup p { color: var(--muted); font-size: 15px; max-width: 34ch; }
   #setup input {
-    font: inherit;
-    font-size: 15px;
-    width: 100%;
-    padding: 13px 14px;
-    background: var(--surface);
-    color: var(--ink);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    outline: none;
+    font: inherit; font-size: 15px; width: 100%; padding: 13px 14px;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px; outline: none;
   }
   #setup input:focus { border-color: var(--muted); }
   #setup .row { display: flex; gap: 12px; align-items: center; }
+  #setup button {
+    font: inherit; font-size: 16px; color: var(--ink); background: transparent;
+    border: 1px solid var(--muted); border-radius: 8px; padding: 12px 22px; min-height: 46px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <span class="brand">~/diário<span class="cursor"></span></span>
-  <span class="hoje" id="hoje"></span>
+  <div class="tabs">
+    <button class="tab active" id="tab-escrever" data-view="escrever">~/diário<span class="cursor"></span></button>
+    <button class="tab" id="tab-historico" data-view="historico">histórico</button>
+  </div>
+  <div class="headright">
+    <span class="hoje" id="hoje"></span>
+    <button class="cfg-top" id="config-link" title="colar/trocar a chave do vault">cfg</button>
+  </div>
 </header>
 
-<main>
-  <textarea id="texto" autocomplete="off" autocapitalize="sentences"
-    placeholder="escreve ou dita aqui. isso fica só seu."></textarea>
-</main>
+<!-- ─────────── escrever ─────────── -->
+<section id="escrever">
+  <main>
+    <textarea id="texto" autocomplete="off" autocapitalize="sentences"
+      placeholder="escreve, grava ou anexa aqui. isso fica só seu."></textarea>
+  </main>
 
-<footer>
-  <div id="status" role="status" aria-live="polite"></div>
-  <a id="config-link" href="#" aria-label="configurar chave">⚙</a>
-  <button id="enviar">enviar</button>
-</footer>
+  <div id="bandeja">
+    <div class="audio-chip" id="audioChip">
+      <span class="dot">●</span>
+      <span class="lbl" id="audioLbl">rec</span>
+      <span class="t" id="audioT">0:00</span>
+      <span class="act" id="audioPlay">ouvir</span>
+      <span class="act" id="audioX">apagar</span>
+    </div>
+    <div class="fotos" id="fotos"></div>
+  </div>
 
+  <footer>
+    <div id="status" role="status" aria-live="polite"></div>
+    <button class="boxbtn" id="btnMic" aria-label="gravar áudio" title="gravar áudio">●</button>
+    <button class="boxbtn" id="btnFoto">foto</button>
+    <button class="boxbtn" id="enviar">enviar</button>
+  </footer>
+  <input id="file-input" type="file" accept="image/*" multiple hidden>
+</section>
+
+<!-- ─────────── histórico ─────────── -->
+<section id="historico">
+  <div id="hist-info"></div>
+  <div id="hist-lista"></div>
+</section>
+
+<!-- ─────────── chave ─────────── -->
 <section id="setup" hidden>
-  <h1>~/diário · primeira vez</h1>
+  <h1>~/diário · chave</h1>
   <p>para o diário alcançar o seu vault, cola aqui a chave que o Claude te passou. ela fica guardada só neste celular.</p>
-  <input id="token-input" type="password" inputmode="text" autocomplete="off"
-    placeholder="github_pat_…">
+  <input id="token-input" type="password" inputmode="text" autocomplete="off" placeholder="github_pat_…">
   <div class="row">
     <button id="salvar-token">guardar chave</button>
     <div id="setup-status" class="ok" style="font-size:14px"></div>
@@ -174,16 +236,18 @@
 </section>
 
 <script>
-  const REPO = 'marinasegre-dev/vault';
-  const PASTA = 'caixa-de-entrada';
+  const REPO   = 'marinasegre-dev/vault';
+  const INBOX  = 'caixa-de-entrada';
+  const DIARIO = 'pessoal/diario';
   const LS_TOKEN = 'diario-token';
   const LS_DRAFT = 'diario-rascunho';
+  const LS_CACHE = 'diario-historico-cache';
 
   const $ = id => document.getElementById(id);
   const texto = $('texto'), status = $('status'), enviar = $('enviar');
   const setup = $('setup'), tokenInput = $('token-input');
 
-  /* data no topo: "dom, 6 jul" */
+  /* data no topo: "dom, 13 jul" */
   $('hoje').textContent = new Date().toLocaleDateString('pt-BR',
     { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '');
 
@@ -194,21 +258,21 @@
     mostrarStatus('chave guardada ✓', 'ok');
   }
 
-  /* rascunho nunca se perde */
+  /* rascunho de texto nunca se perde */
   texto.value = localStorage.getItem(LS_DRAFT) || '';
-  texto.addEventListener('input', () =>
-    localStorage.setItem(LS_DRAFT, texto.value));
+  texto.addEventListener('input', () => localStorage.setItem(LS_DRAFT, texto.value));
 
   if (!localStorage.getItem(LS_TOKEN)) setup.hidden = false;
 
-  $('config-link').addEventListener('click', e => {
-    e.preventDefault();
-    tokenInput.value = '';
-    $('setup-status').textContent = '';
-    setup.hidden = false;
-    tokenInput.focus();
-  });
+  function mostrarStatus(msg, tipo) { status.textContent = msg; status.className = tipo || ''; }
+  function token() { return localStorage.getItem(LS_TOKEN); }
+  const p2 = n => String(n).padStart(2, '0');
 
+  /* ══════════════ chave ══════════════ */
+  $('config-link').addEventListener('click', () => {
+    tokenInput.value = ''; $('setup-status').textContent = '';
+    setup.hidden = false; tokenInput.focus();
+  });
   $('salvar-token').addEventListener('click', () => {
     const t = tokenInput.value.trim();
     if (!t) { tokenInput.focus(); return; }
@@ -217,74 +281,425 @@
     setTimeout(() => { setup.hidden = true; texto.focus(); }, 600);
   });
 
-  function mostrarStatus(msg, tipo) {
-    status.textContent = msg;
-    status.className = tipo || '';
+  /* ══════════════ abas ══════════════ */
+  const vEscrever = $('escrever'), vHistorico = $('historico');
+  function irPara(view) {
+    const escr = view === 'escrever';
+    vEscrever.hidden = !escr;
+    vHistorico.classList.toggle('show', !escr);
+    $('tab-escrever').classList.toggle('active', escr);
+    $('tab-historico').classList.toggle('active', !escr);
+    if (!escr) carregarHistorico();
+  }
+  $('tab-escrever').addEventListener('click', () => irPara('escrever'));
+  $('tab-historico').addEventListener('click', () => irPara('historico'));
+
+  /* ══════════════ anexos: estado ══════════════ */
+  let fotos = [];               // { blob, nome }
+  let audio = null;             // { blob, ext, seg }
+  const bandeja = $('bandeja'), fotosEl = $('fotos'), audioChip = $('audioChip');
+
+  function syncBandeja() {
+    bandeja.classList.toggle('show', fotos.length > 0 || !!audio);
   }
 
-  function nomeDoArquivo(agora) {
-    const p = n => String(n).padStart(2, '0');
-    return `${agora.getFullYear()}-${p(agora.getMonth() + 1)}-${p(agora.getDate())}` +
-           `-${p(agora.getHours())}${p(agora.getMinutes())}${p(agora.getSeconds())}.md`;
+  /* ── foto ── */
+  const fileInput = $('file-input');
+  $('btnFoto').addEventListener('click', () => {
+    if (fotos.length >= 4) { mostrarStatus('máx. 4 fotos por entrada'); return; }
+    fileInput.click();
+  });
+  fileInput.addEventListener('change', async () => {
+    const files = Array.from(fileInput.files || []);
+    fileInput.value = '';
+    for (const f of files) {
+      if (fotos.length >= 4) { mostrarStatus('máx. 4 fotos por entrada'); break; }
+      try {
+        const blob = await reduzirImagem(f);
+        const nome = `foto-${fotos.length + 1}.jpg`;
+        fotos.push({ blob, nome });
+        adicionarThumb(blob);
+      } catch { mostrarStatus('não consegui ler essa foto', 'err'); }
+    }
+    syncBandeja();
+  });
+
+  function adicionarThumb(blob) {
+    const url = URL.createObjectURL(blob);
+    const t = document.createElement('div'); t.className = 'thumb';
+    const img = document.createElement('img'); img.src = url;
+    const x = document.createElement('span'); x.className = 'x'; x.textContent = '×';
+    x.onclick = () => {
+      const i = [...fotosEl.children].indexOf(t);
+      if (i >= 0) fotos.splice(i, 1);
+      URL.revokeObjectURL(url); t.remove(); syncBandeja();
+    };
+    t.appendChild(img); t.appendChild(x); fotosEl.appendChild(t);
   }
 
-  function paraBase64(str) {
+  async function reduzirImagem(file, max = 1600, quality = 0.82) {
+    let bmp;
+    try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
+    catch { bmp = await createImageBitmap(file); }
+    let { width: w, height: h } = bmp;
+    if (Math.max(w, h) > max) {
+      const s = max / Math.max(w, h);
+      w = Math.round(w * s); h = Math.round(h * s);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(bmp, 0, 0, w, h);
+    bmp.close && bmp.close();
+    return await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
+  }
+
+  /* ── áudio ── */
+  const btnMic = $('btnMic'), audioT = $('audioT'), audioLbl = $('audioLbl');
+  let mediaRecorder = null, chunks = [], stream = null, gravando = false, seg = 0, timer = null, audioUrl = null;
+
+  const micOK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+  if (!micOK) { btnMic.classList.add('off'); btnMic.disabled = true; btnMic.title = 'gravar áudio não é suportado neste navegador'; }
+
+  function escolherMime() {
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+    for (const m of ['audio/mp4', 'audio/webm', 'audio/webm;codecs=opus']) {
+      if (MediaRecorder.isTypeSupported(m)) return m;
+    }
+    return '';
+  }
+  function extDe(mime) {
+    if (/mp4|m4a|aac/.test(mime)) return 'm4a';
+    if (/webm/.test(mime)) return 'webm';
+    if (/ogg/.test(mime)) return 'ogg';
+    return 'm4a';
+  }
+
+  btnMic.addEventListener('click', async () => {
+    if (!gravando) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch {
+        mostrarStatus('não consegui acessar o microfone. seu texto continua salvo.', 'err');
+        return;
+      }
+      const mime = escolherMime();
+      try { mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
+      catch { mediaRecorder = new MediaRecorder(stream); }
+      chunks = [];
+      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+        const tipo = mediaRecorder.mimeType || 'audio/mp4';
+        const blob = new Blob(chunks, { type: tipo });
+        audio = { blob, ext: extDe(tipo), seg };
+        stream.getTracks().forEach(t => t.stop()); stream = null;
+        audioChip.classList.remove('rec'); audioChip.classList.add('done');
+        audioLbl.textContent = 'áudio'; $('audioPlay').style.visibility = 'visible';
+        btnMic.classList.remove('rec'); btnMic.textContent = '●'; btnMic.title = 'gravar áudio';
+      };
+      seg = 0; audioT.textContent = '0:00'; audioLbl.textContent = 'rec';
+      audioChip.classList.add('show', 'rec'); audioChip.classList.remove('done');
+      $('audioPlay').style.visibility = 'hidden';
+      btnMic.classList.add('rec'); btnMic.textContent = '■'; btnMic.title = 'parar';
+      gravando = true; syncBandeja();
+      mediaRecorder.start();
+      timer = setInterval(() => { seg++; audioT.textContent = `${Math.floor(seg/60)}:${p2(seg%60)}`; }, 1000);
+    } else {
+      gravando = false; clearInterval(timer);
+      try { mediaRecorder.stop(); } catch {}
+    }
+  });
+
+  $('audioPlay').addEventListener('click', () => {
+    if (!audio) return;
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    audioUrl = URL.createObjectURL(audio.blob);
+    new Audio(audioUrl).play().catch(() => mostrarStatus('não consegui tocar o áudio', 'err'));
+  });
+  $('audioX').addEventListener('click', () => {
+    if (gravando) { gravando = false; clearInterval(timer); try { mediaRecorder.stop(); } catch {} }
+    audio = null;
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
+    audioChip.classList.remove('show', 'rec', 'done');
+    btnMic.classList.remove('rec'); btnMic.textContent = '●'; btnMic.title = 'gravar áudio';
+    syncBandeja();
+  });
+
+  /* ══════════════ envio ══════════════ */
+  function paraBase64Texto(str) {
     const bytes = new TextEncoder().encode(str);
-    let bin = '';
-    bytes.forEach(b => bin += String.fromCharCode(b));
+    let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
     return btoa(bin);
+  }
+  function blobParaBase64(blob) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+  }
+  async function subirArquivo(path, base64, message) {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${path}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token()}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ message, content: base64 })
+    });
+    return r;
   }
 
   async function enviarNota() {
     const corpo = texto.value.trim();
-    if (!corpo) { texto.focus(); return; }
-    const token = localStorage.getItem(LS_TOKEN);
-    if (!token) { setup.hidden = false; return; }
+    if (!corpo && !fotos.length && !audio) { texto.focus(); return; }
+    if (!token()) { setup.hidden = false; return; }
 
-    enviar.disabled = true;
-    mostrarStatus('enviando…');
+    enviar.disabled = true; btnMic.disabled = true; $('btnFoto').disabled = true;
 
     const agora = new Date();
-    const p = n => String(n).padStart(2, '0');
-    const carimbo = `${agora.getFullYear()}-${p(agora.getMonth() + 1)}-${p(agora.getDate())} ${p(agora.getHours())}:${p(agora.getMinutes())}`;
-    const conteudo = `---\ndata: ${carimbo}\norigem: iphone\n---\n\n${corpo}\n`;
+    const base = `${agora.getFullYear()}-${p2(agora.getMonth()+1)}-${p2(agora.getDate())}-${p2(agora.getHours())}${p2(agora.getMinutes())}${p2(agora.getSeconds())}`;
+    const carimbo = `${agora.getFullYear()}-${p2(agora.getMonth()+1)}-${p2(agora.getDate())} ${p2(agora.getHours())}:${p2(agora.getMinutes())}`;
 
+    const anexos = [];   // nomes dos arquivos que subiram
     try {
-      const r = await fetch(
-        `https://api.github.com/repos/${REPO}/contents/${PASTA}/${nomeDoArquivo(agora)}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: `diário: ${carimbo}`,
-            content: paraBase64(conteudo)
-          })
-        });
+      // 1) fotos
+      for (let i = 0; i < fotos.length; i++) {
+        mostrarStatus(`enviando foto ${i+1}/${fotos.length}…`);
+        const nome = `${base}-${i+1}.jpg`;
+        const b64 = await blobParaBase64(fotos[i].blob);
+        const r = await subirArquivo(`${INBOX}/${nome}`, b64, `diário anexo: ${nome}`);
+        if (!(r.status === 201 || r.status === 200)) return void erroEnvio(r.status);
+        anexos.push(nome);
+      }
+      // 2) áudio
+      if (audio) {
+        mostrarStatus('enviando áudio…');
+        const nome = `${base}.${audio.ext}`;
+        const b64 = await blobParaBase64(audio.blob);
+        const r = await subirArquivo(`${INBOX}/${nome}`, b64, `diário anexo: ${nome}`);
+        if (!(r.status === 201 || r.status === 200)) return void erroEnvio(r.status);
+        anexos.push(nome);
+      }
+      // 3) nota .md (por último; só cita anexos que subiram)
+      mostrarStatus(anexos.length ? 'enviando nota…' : 'enviando…');
+      let fm = `---\ndata: ${carimbo}\norigem: iphone\n`;
+      if (anexos.length) fm += `anexos: [${anexos.join(', ')}]\n`;
+      fm += `---\n\n`;
+      let doc = fm + (corpo ? corpo + '\n' : '');
+      if (anexos.length) doc += '\n' + anexos.map(a => `![[${a}]]`).join('\n') + '\n';
 
+      const r = await subirArquivo(`${INBOX}/${base}.md`, paraBase64Texto(doc), `diário: ${carimbo}`);
       if (r.status === 201 || r.status === 200) {
-        texto.value = '';
-        localStorage.removeItem(LS_DRAFT);
+        limparEntrada();
         mostrarStatus('salvo ✓', 'ok');
+        localStorage.removeItem(LS_CACHE);   // força atualizar o histórico na próxima abertura
         setTimeout(() => { if (status.textContent === 'salvo ✓') mostrarStatus(''); }, 2500);
-      } else if (r.status === 401 || r.status === 403) {
-        mostrarStatus('chave inválida: toca em ⚙ para colar de novo', 'err');
-      } else if (r.status === 404) {
-        mostrarStatus('vault não encontrado: confere a chave em ⚙', 'err');
       } else {
-        mostrarStatus(`erro ${r.status}. seu texto está guardado, tenta de novo`, 'err');
+        erroEnvio(r.status);
       }
     } catch {
       mostrarStatus('sem internet. seu texto está guardado, tenta de novo', 'err');
     } finally {
-      enviar.disabled = false;
+      enviar.disabled = false; btnMic.disabled = !micOK; $('btnFoto').disabled = false;
     }
   }
 
+  function erroEnvio(st) {
+    if (st === 401 || st === 403) mostrarStatus('chave inválida: toca em cfg para colar de novo', 'err');
+    else if (st === 404) mostrarStatus('vault não encontrado: confere a chave em cfg', 'err');
+    else mostrarStatus(`erro ${st}. seu texto está guardado, tenta de novo`, 'err');
+  }
+
+  function limparEntrada() {
+    texto.value = ''; localStorage.removeItem(LS_DRAFT);
+    fotos = []; fotosEl.innerHTML = '';
+    audio = null; if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
+    audioChip.classList.remove('show', 'rec', 'done');
+    btnMic.textContent = '●'; btnMic.classList.remove('rec');
+    syncBandeja();
+  }
+
   enviar.addEventListener('click', enviarNota);
+
+  /* ══════════════ histórico ══════════════ */
+  const histInfo = $('hist-info'), histLista = $('hist-lista');
+  let histCarregando = false;
+
+  function infoHist(msg, err) { histInfo.textContent = msg || ''; histInfo.className = err ? 'err' : ''; }
+
+  async function apiGet(path, accept) {
+    return fetch(`https://api.github.com/repos/${REPO}/contents/${encodeURI(path)}`, {
+      headers: { 'Authorization': `Bearer ${token()}`, 'Accept': accept || 'application/vnd.github+json' }
+    });
+  }
+
+  async function listarPasta(path) {
+    try {
+      const r = await apiGet(path);
+      if (!r.ok) return [];
+      const arr = await r.json();
+      if (!Array.isArray(arr)) return [];
+      return arr.filter(f => f.type === 'file' && f.name.toLowerCase().endsWith('.md'))
+                .map(f => ({ path: f.path, name: f.name, sha: f.sha, dir: path }));
+    } catch { return []; }
+  }
+
+  function dataDaEntrada(fm, nome) {
+    const m = fm.data && String(fm.data).match(/(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2})?:?(\d{2})?/);
+    if (m) return new Date(+m[1], +m[2]-1, +m[3], +(m[4]||0), +(m[5]||0));
+    const n = nome.match(/(\d{4})-(\d{2})-(\d{2})(?:[ -]?(\d{2})(\d{2}))?/);
+    if (n) return new Date(+n[1], +n[2]-1, +n[3], +(n[4]||0), +(n[5]||0));
+    return new Date(0);
+  }
+
+  function lerCache() { try { return JSON.parse(localStorage.getItem(LS_CACHE)) || {}; } catch { return {}; } }
+  function salvarCache(c) { try { localStorage.setItem(LS_CACHE, JSON.stringify(c)); } catch {} }
+
+  async function carregarHistorico() {
+    if (histCarregando) return;
+    if (!token()) { infoHist('sem chave ainda. toca em cfg para colar.', true); return; }
+    histCarregando = true;
+
+    const cache = lerCache();               // { [path]: {sha, content, dir} }
+    // 1) render imediato do cache, se houver
+    if (Object.keys(cache).length) renderHistorico(cache);
+    infoHist(Object.keys(cache).length ? 'atualizando…' : 'carregando…');
+
+    try {
+      const arquivos = [...await listarPasta(DIARIO), ...await listarPasta(INBOX)];
+      const novoCache = {};
+      let baixados = 0;
+      await Promise.all(arquivos.map(async f => {
+        if (cache[f.path] && cache[f.path].sha === f.sha) {
+          novoCache[f.path] = cache[f.path];
+        } else {
+          try {
+            const r = await apiGet(f.path, 'application/vnd.github.raw');
+            const txt = r.ok ? await r.text() : '';
+            novoCache[f.path] = { sha: f.sha, content: txt, dir: f.dir };
+            baixados++;
+          } catch { if (cache[f.path]) novoCache[f.path] = cache[f.path]; }
+        }
+      }));
+      salvarCache(novoCache);
+      renderHistorico(novoCache);
+      infoHist(Object.keys(novoCache).length ? '' : 'ainda não há nada aqui. o que você enviar aparece nesta aba.');
+    } catch {
+      if (Object.keys(cache).length) infoHist('sem internet — mostrando o que já baixei.', true);
+      else infoHist('sem internet e nada guardado ainda.', true);
+    } finally {
+      histCarregando = false;
+    }
+  }
+
+  function renderHistorico(cache) {
+    const entradas = Object.entries(cache).map(([path, v]) => {
+      const { fm, corpo } = separarFrontmatter(v.content || '');
+      return { path, dir: v.dir, fm, corpo, quando: dataDaEntrada(fm, path.split('/').pop()) };
+    }).sort((a, b) => b.quando - a.quando);
+
+    histLista.innerHTML = '';
+    for (const e of entradas) {
+      const wrap = document.createElement('div'); wrap.className = 'entry';
+      const sep = document.createElement('div'); sep.className = 'entry-sep';
+      const when = document.createElement('span'); when.className = 'when';
+      when.textContent = e.quando > new Date(1) ? formatarQuando(e.quando) : '';
+      sep.appendChild(when); wrap.appendChild(sep);
+      if (e.fm.sobre) {
+        const ab = document.createElement('div'); ab.className = 'about';
+        ab.textContent = String(e.fm.sobre).replace(/^["']|["']$/g, '');
+        wrap.appendChild(ab);
+      }
+      const body = document.createElement('div'); body.className = 'md';
+      body.innerHTML = mdParaHtml(e.corpo);
+      wrap.appendChild(body);
+      ligarAnexos(body, e.dir);
+      histLista.appendChild(wrap);
+    }
+  }
+
+  function formatarQuando(d) {
+    const data = d.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\./g, '');
+    const hora = (d.getHours() || d.getMinutes()) ? ` · ${p2(d.getHours())}:${p2(d.getMinutes())}` : '';
+    return data + hora;
+  }
+
+  function separarFrontmatter(txt) {
+    const fm = {};
+    let corpo = txt;
+    const m = txt.match(/^---\n([\s\S]*?)\n---\n?/);
+    if (m) {
+      corpo = txt.slice(m[0].length);
+      m[1].split('\n').forEach(linha => {
+        const i = linha.indexOf(':');
+        if (i > 0) fm[linha.slice(0, i).trim()] = linha.slice(i + 1).trim();
+      });
+    }
+    return { fm, corpo };
+  }
+
+  /* markdown mínimo e seguro (escapa HTML antes) */
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function inline(s) {
+    return esc(s)
+      .replace(/!\[\[([^\]]+)\]\]/g, (_, a) => ` ATT:${a.trim()} `)
+      .replace(/\[\[([^\]]+)\]\]/g, (_, a) => `<span class="wl">${a.trim()}</span>`)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  }
+  function mdParaHtml(md) {
+    const linhas = md.replace(/\r/g, '').split('\n');
+    const out = []; let par = [], quote = [];
+    const fechaPar = () => { if (par.length) { out.push('<p>' + par.join('<br>') + '</p>'); par = []; } };
+    const fechaQuote = () => { if (quote.length) { out.push('<blockquote>' + quote.join('<br>') + '</blockquote>'); quote = []; } };
+    for (let ln of linhas) {
+      if (/^\s*>\s?/.test(ln)) { fechaPar(); quote.push(inline(ln.replace(/^\s*>\s?/, ''))); continue; }
+      fechaQuote();
+      if (/^\s*$/.test(ln)) { fechaPar(); continue; }
+      let h = ln.match(/^(#{1,3})\s+(.*)$/);
+      if (h) { fechaPar(); out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`); continue; }
+      if (/^\s*---\s*$/.test(ln)) { fechaPar(); out.push('<hr>'); continue; }
+      par.push(inline(ln));
+    }
+    fechaPar(); fechaQuote();
+    // troca os marcadores de anexo por botões
+    return out.join('\n').replace(/ ATT:([^ ]+) /g, (_, a) => {
+      const nome = a.trim(); const ehAudio = /\.(m4a|webm|ogg|mp3|wav|aac)$/i.test(nome);
+      return `<button class="att" data-att="${esc(nome)}">${ehAudio ? '[áudio]' : '[foto]'} ${esc(nome)}</button>`;
+    });
+  }
+
+  /* carrega anexo (privado) sob demanda ao tocar */
+  function ligarAnexos(container, dir) {
+    container.querySelectorAll('.att').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (btn.dataset.loaded) return;
+        const nome = btn.dataset.att;
+        const candidatos = [ `${dir}/${nome}`, `${INBOX}/${nome}`, `${DIARIO}/${nome}` ];
+        btn.textContent = 'carregando…';
+        for (const path of candidatos) {
+          try {
+            const r = await apiGet(path, 'application/vnd.github.raw');
+            if (!r.ok) continue;
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const ehAudio = /\.(m4a|webm|ogg|mp3|wav|aac)$/i.test(nome);
+            btn.textContent = ''; btn.dataset.loaded = '1';
+            if (ehAudio) {
+              const au = document.createElement('audio'); au.controls = true; au.src = url; btn.appendChild(au);
+            } else {
+              const im = document.createElement('img'); im.src = url; im.alt = nome; btn.appendChild(im);
+            }
+            return;
+          } catch {}
+        }
+        btn.textContent = `[anexo indisponível] ${nome}`;
+      });
+    });
+  }
 </script>
 </body>
 </html>

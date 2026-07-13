@@ -71,6 +71,32 @@ no vault) e **anexar foto(s)**. Tudo sem quebrar o princípio "uma tela, uma aç
 - **Nada muda.** O mesmo PAT de hoje (permissão de Contents no repo `vault`) já cobre
   áudio e foto, porque é o mesmo endpoint. Ela não precisa gerar chave nova.
 
+## Aba de histórico (2ª funcionalidade, aprovada por conversa)
+
+Marina quer, conscientemente, deixar de ser só "captura e esquece": uma aba para
+**reler** tudo que já escreveu, reunido numa visão só ("tipo uma grande nota", como
+ela via na app Notas do iPhone), pra não ficar tudo espalhado/invisível na nuvem.
+Não precisa ser offline; puxar da nuvem tá ok (mas mantemos um cache local leve pra
+abrir instantâneo e aguentar queda de internet).
+
+- **Navegação:** duas abas terminais no topo, `escrever` (padrão ao abrir) e
+  `histórico`. Captura continua sendo a tela principal.
+- **Fonte:** repo `vault` via GitHub API — lê `pessoal/diario/` (palavras dela já
+  organizadas) + `caixa-de-entrada/` (recém-enviadas, ainda não processadas). Junta e
+  ordena por data (frontmatter `data:` ou nome do arquivo). **Mais novo em cima.**
+- **Visão:** fluxo contínuo, não cartões. Divisor discreto com data/hora entre
+  entradas (`── dom, 13 jul · 14:30 ──`), depois o conteúdo renderizado (markdown
+  simples: títulos, negrito, citação `>`, wikilinks). Mostra a nota inteira (inclusive
+  a análise do Claude, quando houver) — é "as coisas dela".
+- **Anexos no histórico:** aparecem como chip tocável (`[foto]`, `[áudio 0:12]`) que
+  carrega/mostra/toca sob demanda (lazy), pra manter a lista leve e confiável.
+  Miniatura inline automática fica pra depois.
+- **Cache:** `localStorage` guarda o conteúdo por `sha`; ao abrir, mostra o cache na
+  hora e atualiza em segundo plano (só baixa o que mudou). Mídia não entra no cache
+  (carrega no toque). Sem internet: mostra o cache com aviso.
+- **Token:** o mesmo. Listar/ler pastas do `vault` é permissão de Contents (leitura),
+  que a chave atual já tem.
+
 ## Fora de escopo (YAGNI)
 - Múltiplos áudios por entrada.
 - Editar/recortar foto ou áudio dentro do app.
