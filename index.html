@@ -91,14 +91,6 @@
   /* bandeja de anexos */
   #bandeja { border-top: 1px solid var(--line); padding: 12px 20px; display: none; flex-direction: column; gap: 12px; }
   #bandeja.show { display: flex; }
-  .audio-chip { display: none; align-items: center; gap: 14px; font-size: 15px; }
-  .audio-chip.show { display: flex; }
-  .audio-chip .dot { color: var(--err); }
-  .audio-chip.rec .dot { animation: blink .9s steps(1) infinite; }
-  .audio-chip.done .dot { color: var(--ok); animation: none; }
-  .audio-chip .lbl { color: var(--muted); }
-  .audio-chip .t { color: var(--ink); min-width: 44px; }
-  .audio-chip .act { color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }
   .fotos { display: flex; gap: 8px; flex-wrap: wrap; }
   .thumb { width: 56px; height: 56px; border-radius: 6px; position: relative; overflow: hidden; flex: none; border: 1px solid var(--line); }
   .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -120,9 +112,6 @@
   }
   .boxbtn:active { background: #161613; }
   .boxbtn:disabled { opacity: .45; }
-  .boxbtn.rec { border-color: var(--err); color: var(--err); }
-  #btnMic { color: var(--err); font-size: 17px; line-height: 1; padding: 12px 16px; }
-  #btnMic.off { color: var(--muted); opacity: .4; }
   #enviar { font-size: 16px; border-color: var(--muted); padding: 12px 18px; }
 
   /* ── vista: histórico ── */
@@ -195,23 +184,15 @@
 <section id="escrever">
   <main>
     <textarea id="texto" autocomplete="off" autocapitalize="sentences"
-      placeholder="escreve, grava ou anexa aqui. isso fica só seu."></textarea>
+      placeholder="escreve ou anexa aqui. isso fica só seu."></textarea>
   </main>
 
   <div id="bandeja">
-    <div class="audio-chip" id="audioChip">
-      <span class="dot">●</span>
-      <span class="lbl" id="audioLbl">rec</span>
-      <span class="t" id="audioT">0:00</span>
-      <span class="act" id="audioPlay">ouvir</span>
-      <span class="act" id="audioX">apagar</span>
-    </div>
     <div class="fotos" id="fotos"></div>
   </div>
 
   <footer>
     <div id="status" role="status" aria-live="polite"></div>
-    <button class="boxbtn" id="btnMic" aria-label="gravar áudio" title="gravar áudio">●</button>
     <button class="boxbtn" id="btnFoto">foto</button>
     <button class="boxbtn" id="enviar">enviar</button>
   </footer>
@@ -294,16 +275,12 @@
   $('tab-escrever').addEventListener('click', () => irPara('escrever'));
   $('tab-historico').addEventListener('click', () => irPara('historico'));
 
-  /* ══════════════ anexos: estado ══════════════ */
+  /* ══════════════ anexos: fotos ══════════════ */
   let fotos = [];               // { blob, nome }
-  let audio = null;             // { blob, ext, seg }
-  const bandeja = $('bandeja'), fotosEl = $('fotos'), audioChip = $('audioChip');
+  const bandeja = $('bandeja'), fotosEl = $('fotos');
 
-  function syncBandeja() {
-    bandeja.classList.toggle('show', fotos.length > 0 || !!audio);
-  }
+  function syncBandeja() { bandeja.classList.toggle('show', fotos.length > 0); }
 
-  /* ── foto ── */
   const fileInput = $('file-input');
   $('btnFoto').addEventListener('click', () => {
     if (fotos.length >= 4) { mostrarStatus('máx. 4 fotos por entrada'); return; }
@@ -353,77 +330,6 @@
     return await new Promise(res => canvas.toBlob(res, 'image/jpeg', quality));
   }
 
-  /* ── áudio ── */
-  const btnMic = $('btnMic'), audioT = $('audioT'), audioLbl = $('audioLbl');
-  let mediaRecorder = null, chunks = [], stream = null, gravando = false, seg = 0, timer = null, audioUrl = null;
-
-  const micOK = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
-  if (!micOK) { btnMic.classList.add('off'); btnMic.disabled = true; btnMic.title = 'gravar áudio não é suportado neste navegador'; }
-
-  function escolherMime() {
-    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
-    for (const m of ['audio/mp4', 'audio/webm', 'audio/webm;codecs=opus']) {
-      if (MediaRecorder.isTypeSupported(m)) return m;
-    }
-    return '';
-  }
-  function extDe(mime) {
-    if (/mp4|m4a|aac/.test(mime)) return 'm4a';
-    if (/webm/.test(mime)) return 'webm';
-    if (/ogg/.test(mime)) return 'ogg';
-    return 'm4a';
-  }
-
-  btnMic.addEventListener('click', async () => {
-    if (!gravando) {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch {
-        mostrarStatus('não consegui acessar o microfone. seu texto continua salvo.', 'err');
-        return;
-      }
-      const mime = escolherMime();
-      try { mediaRecorder = mime ? new MediaRecorder(stream, { mimeType: mime }) : new MediaRecorder(stream); }
-      catch { mediaRecorder = new MediaRecorder(stream); }
-      chunks = [];
-      mediaRecorder.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-      mediaRecorder.onstop = () => {
-        const tipo = mediaRecorder.mimeType || 'audio/mp4';
-        const blob = new Blob(chunks, { type: tipo });
-        audio = { blob, ext: extDe(tipo), seg };
-        stream.getTracks().forEach(t => t.stop()); stream = null;
-        audioChip.classList.remove('rec'); audioChip.classList.add('done');
-        audioLbl.textContent = 'áudio'; $('audioPlay').style.visibility = 'visible';
-        btnMic.classList.remove('rec'); btnMic.textContent = '●'; btnMic.title = 'gravar áudio';
-      };
-      seg = 0; audioT.textContent = '0:00'; audioLbl.textContent = 'rec';
-      audioChip.classList.add('show', 'rec'); audioChip.classList.remove('done');
-      $('audioPlay').style.visibility = 'hidden';
-      btnMic.classList.add('rec'); btnMic.textContent = '■'; btnMic.title = 'parar';
-      gravando = true; syncBandeja();
-      mediaRecorder.start();
-      timer = setInterval(() => { seg++; audioT.textContent = `${Math.floor(seg/60)}:${p2(seg%60)}`; }, 1000);
-    } else {
-      gravando = false; clearInterval(timer);
-      try { mediaRecorder.stop(); } catch {}
-    }
-  });
-
-  $('audioPlay').addEventListener('click', () => {
-    if (!audio) return;
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    audioUrl = URL.createObjectURL(audio.blob);
-    new Audio(audioUrl).play().catch(() => mostrarStatus('não consegui tocar o áudio', 'err'));
-  });
-  $('audioX').addEventListener('click', () => {
-    if (gravando) { gravando = false; clearInterval(timer); try { mediaRecorder.stop(); } catch {} }
-    audio = null;
-    if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
-    audioChip.classList.remove('show', 'rec', 'done');
-    btnMic.classList.remove('rec'); btnMic.textContent = '●'; btnMic.title = 'gravar áudio';
-    syncBandeja();
-  });
-
   /* ══════════════ envio ══════════════ */
   function paraBase64Texto(str) {
     const bytes = new TextEncoder().encode(str);
@@ -453,10 +359,10 @@
 
   async function enviarNota() {
     const corpo = texto.value.trim();
-    if (!corpo && !fotos.length && !audio) { texto.focus(); return; }
+    if (!corpo && !fotos.length) { texto.focus(); return; }
     if (!token()) { setup.hidden = false; return; }
 
-    enviar.disabled = true; btnMic.disabled = true; $('btnFoto').disabled = true;
+    enviar.disabled = true; $('btnFoto').disabled = true;
 
     const agora = new Date();
     const base = `${agora.getFullYear()}-${p2(agora.getMonth()+1)}-${p2(agora.getDate())}-${p2(agora.getHours())}${p2(agora.getMinutes())}${p2(agora.getSeconds())}`;
@@ -473,16 +379,7 @@
         if (!(r.status === 201 || r.status === 200)) return void erroEnvio(r.status);
         anexos.push(nome);
       }
-      // 2) áudio
-      if (audio) {
-        mostrarStatus('enviando áudio…');
-        const nome = `${base}.${audio.ext}`;
-        const b64 = await blobParaBase64(audio.blob);
-        const r = await subirArquivo(`${INBOX}/${nome}`, b64, `diário anexo: ${nome}`);
-        if (!(r.status === 201 || r.status === 200)) return void erroEnvio(r.status);
-        anexos.push(nome);
-      }
-      // 3) nota .md (por último; só cita anexos que subiram)
+      // 2) nota .md (por último; só cita anexos que subiram)
       mostrarStatus(anexos.length ? 'enviando nota…' : 'enviando…');
       let fm = `---\ndata: ${carimbo}\norigem: iphone\n`;
       if (anexos.length) fm += `anexos: [${anexos.join(', ')}]\n`;
@@ -502,7 +399,7 @@
     } catch {
       mostrarStatus('sem internet. seu texto está guardado, tenta de novo', 'err');
     } finally {
-      enviar.disabled = false; btnMic.disabled = !micOK; $('btnFoto').disabled = false;
+      enviar.disabled = false; $('btnFoto').disabled = false;
     }
   }
 
@@ -515,9 +412,6 @@
   function limparEntrada() {
     texto.value = ''; localStorage.removeItem(LS_DRAFT);
     fotos = []; fotosEl.innerHTML = '';
-    audio = null; if (audioUrl) { URL.revokeObjectURL(audioUrl); audioUrl = null; }
-    audioChip.classList.remove('show', 'rec', 'done');
-    btnMic.textContent = '●'; btnMic.classList.remove('rec');
     syncBandeja();
   }
 
