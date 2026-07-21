@@ -96,6 +96,27 @@
   .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .thumb .x { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 4px; background: rgba(0,0,0,.65); color: var(--ink); font-size: 13px; line-height: 20px; text-align: center; cursor: pointer; }
 
+  /* aviso de insight (na tela de escrever) */
+  #insight-aviso { flex: none; border-top: 1px solid var(--line); }
+  #insight-aviso[hidden] { display: none; }
+  #insight-tira {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 20px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  #insight-tira:active { background: #0d0d0b; }
+  #insight-msg { flex: 1; font-size: 14px; color: var(--ok); }
+  #insight-msg::before { content: "● "; font-size: 10px; opacity: .85; vertical-align: 1px; }
+  .insight-dots {
+    font: inherit; font-size: 20px; line-height: 1; color: var(--muted);
+    letter-spacing: 1px; padding: 2px 4px; flex: none;
+  }
+  #insight-tira[aria-expanded="true"] .insight-dots { color: var(--ink); }
+  #insight-corpo {
+    padding: 2px 20px 16px; max-height: 46vh; overflow-y: auto;
+    -webkit-overflow-scrolling: touch; border-top: 1px solid var(--line);
+  }
+  #insight-corpo[hidden] { display: none; }
+
   footer {
     flex: none; border-top: 1px solid var(--line);
     padding: 10px 16px calc(env(safe-area-inset-bottom) + 12px);
@@ -191,6 +212,14 @@
     <div class="fotos" id="fotos"></div>
   </div>
 
+  <div id="insight-aviso" hidden>
+    <div id="insight-tira" role="button" tabindex="0" aria-expanded="false">
+      <span id="insight-msg">você recebeu um insight, deseja ler mais?</span>
+      <span class="insight-dots" aria-hidden="true">⋯</span>
+    </div>
+    <div id="insight-corpo" class="md" hidden></div>
+  </div>
+
   <footer>
     <div id="status" role="status" aria-live="polite"></div>
     <button class="boxbtn" id="btnFoto">foto</button>
@@ -220,9 +249,11 @@
   const REPO   = 'marinasegre-dev/vault';
   const INBOX  = 'caixa-de-entrada';
   const DIARIO = 'pessoal/diario';
+  const INSIGHTS = 'pessoal/insights';
   const LS_TOKEN = 'diario-token';
   const LS_DRAFT = 'diario-rascunho';
   const LS_CACHE = 'diario-historico-cache';
+  const LS_INSIGHTS_VISTOS = 'diario-insights-vistos';
 
   const $ = id => document.getElementById(id);
   const texto = $('texto'), status = $('status'), enviar = $('enviar');
@@ -271,6 +302,7 @@
     $('tab-escrever').classList.toggle('active', escr);
     $('tab-historico').classList.toggle('active', !escr);
     if (!escr) carregarHistorico();
+    else checarInsights();
   }
   $('tab-escrever').addEventListener('click', () => irPara('escrever'));
   $('tab-historico').addEventListener('click', () => irPara('historico'));
@@ -565,6 +597,82 @@
     fechaPar(); fechaQuote();
     return out.join('\n');
   }
+
+  /* ══════════════ aviso de insight (na tela de escrever) ══════════════ */
+  const insightAviso = $('insight-aviso'), insightTira = $('insight-tira'),
+        insightCorpo = $('insight-corpo');
+  let insightAtual = null;      // { path, sha, content } do insight não visto em foco
+  let insightChecando = false;
+
+  function insightsVistos() { try { return JSON.parse(localStorage.getItem(LS_INSIGHTS_VISTOS)) || {}; } catch { return {}; } }
+  function marcarInsightVisto(sha) {
+    const v = insightsVistos(); v[sha] = 1;
+    try { localStorage.setItem(LS_INSIGHTS_VISTOS, JSON.stringify(v)); } catch {}
+  }
+
+  function dataInsight(content) {
+    const { fm } = separarFrontmatter(content || '');
+    const m = String(fm.criado || '').match(/(\d{4})-(\d{2})-(\d{2})/);
+    return m ? new Date(+m[1], +m[2]-1, +m[3]) : new Date(0);
+  }
+
+  function esconderAviso() {
+    insightAviso.hidden = true;
+    insightCorpo.hidden = true; insightCorpo.innerHTML = '';
+    insightTira.setAttribute('aria-expanded', 'false');
+    insightAtual = null;
+  }
+  function mostrarAviso() {
+    insightCorpo.hidden = true; insightCorpo.innerHTML = '';
+    insightTira.setAttribute('aria-expanded', 'false');
+    insightAviso.hidden = false;
+  }
+
+  async function checarInsights() {
+    if (insightChecando || !token()) return;
+    insightChecando = true;
+    try {
+      const arquivos = await listarPasta(INSIGHTS);   // já trata erro → []
+      const vistos = insightsVistos();
+      const novos = arquivos.filter(f => !vistos[f.sha]);
+      if (!novos.length) { esconderAviso(); return; }
+      // baixa o conteúdo dos não vistos p/ ordenar por 'criado' e renderizar
+      const comConteudo = [];
+      await Promise.all(novos.map(async f => {
+        try {
+          const r = await apiGet(f.path, 'application/vnd.github.raw');
+          if (r.ok) comConteudo.push({ ...f, content: await r.text() });
+        } catch {}
+      }));
+      if (!comConteudo.length) return;   // offline no meio: mantém a tela como está
+      comConteudo.sort((a, b) => dataInsight(b.content) - dataInsight(a.content));
+      insightAtual = comConteudo[0];
+      mostrarAviso();
+    } finally {
+      insightChecando = false;
+    }
+  }
+
+  function alternarInsight() {
+    if (!insightAtual) return;
+    if (insightCorpo.hidden) {                 // abrir e ler
+      const { corpo } = separarFrontmatter(insightAtual.content || '');
+      insightCorpo.innerHTML = mdParaHtml(corpo);
+      insightCorpo.hidden = false;
+      insightTira.setAttribute('aria-expanded', 'true');
+      marcarInsightVisto(insightAtual.sha);
+    } else {                                    // já leu → recolher, some, e busca o próximo
+      esconderAviso();
+      checarInsights();
+    }
+  }
+  insightTira.addEventListener('click', alternarInsight);
+  insightTira.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); alternarInsight(); }
+  });
+
+  /* abertura do app começa na tela de escrever → checa insights de cara */
+  checarInsights();
 
   /* carrega anexo (privado) sob demanda ao tocar */
   function ligarAnexos(container, dir) {
